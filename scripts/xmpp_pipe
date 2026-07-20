@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+"""
+Pipe any command output to XMPP.
+
+Usage:
+  echo "hello world" | python3 xmpp_pipe.py
+  dmesg --level=err | python3 xmpp_pipe.py
+  journalctl -u frigate --since "1 hour ago" | python3 xmpp_pipe.py
+
+  # With a custom title:
+  echo "disk full" | python3 xmpp_pipe.py --title "Disk Full"
+
+  # With env vars inline (or set them in your shell profile):
+  XMPP_JID=bot@server.tld XMPP_PASSWORD=*** XMPP_RECIPIENT=you@server.tld \
+    echo "test" | python3 xmpp_pipe.py
+
+Environment variables (set these in your .bashrc or .profile):
+"""
+
+# === SET YOUR XMPP CREDENTIALS HERE ===
+import os
+
+os.environ.setdefault("XMPP_JID",       "placeholder")  # e.g. "bot@server.tld"
+os.environ.setdefault("XMPP_PASSWORD",  "change_ME")  # e.g. "supersecret"
+os.environ.setdefault("XMPP_RECIPIENT", "placeholder")  # e.g. "you@server.tld"
+# Optional overrides:
+# os.environ.setdefault("XMPP_HOST", "")  # e.g. "xmpp.server.tld"
+# os.environ.setdefault("XMPP_PORT", "5222")
+# ======================================
+
+import sys
+import argparse
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from xmpp_alert import alert
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Pipe stdin to an XMPP message."
+    )
+    parser.add_argument(
+        "--title", "-t",
+        default="Update",
+        help="Title for the XMPP message (default: 'Pipeline Output')"
+    )
+    parser.add_argument(
+        "--max-chars", "-m",
+        type=int,
+        default=20000,
+        help="Maximum characters to send (default: 20000)"
+    )
+    args = parser.parse_args()
+
+    # Read piped input from stdin
+    data = sys.stdin.read()
+
+    if not data.strip():
+        print("No input received on stdin. Usage: echo 'text' | python3 xmpp_pipe.py")
+        sys.exit(1)
+
+    # Truncate if too long
+    if len(data) > args.max_chars:
+        data = data[:args.max_chars] + "\n\n[... truncated, {} chars total]".format(len(data))
+
+    alert(args.title, data)
+
+
+if __name__ == "__main__":
+    main()

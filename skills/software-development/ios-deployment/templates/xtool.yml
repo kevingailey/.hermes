@@ -1,0 +1,11 @@
+version: 1
+bundleID: com.example.MyApp
+product: MyApp
+# iconPath: Resources/AppIcon.png
+# infoPath: Custom-Info.plist
+# entitlementsPath: App.entitlements
+# resources:
+#   - Resources/GoogleServices-Info.plist
+# extensions:
+#   - product: MyAppWidget
+#     infoPath: MyAppWidget-Info.plist
